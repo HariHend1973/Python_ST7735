@@ -25,8 +25,8 @@ import numpy as np
 from PIL import Image
 from PIL import ImageDraw
 
-import Adafruit_GPIO as GPIO
-import Adafruit_GPIO.SPI as SPI
+import onionGpio as GPIO
+import OnionSpi as SPI
 
 
 # SPI_CLOCK_HZ = 64000000 # 64 MHz
@@ -136,17 +136,23 @@ class ST7735(object):
         self._gpio = gpio
         self.width = width
         self.height = height
-        if self._gpio is None:
-            self._gpio = GPIO.get_platform_gpio()
+        #In onion the gpio is controlled using
+        #different object for each pin, we define
+        #_gpiodc and _gpiorst for that
+        self._gpiodc = GPIO.OnionGpio(dc)
+        if rst is not None:
+            self._gpiorst = GPIO.OnionGpio(rst)
         # Set DC as output.
-        self._gpio.setup(dc, GPIO.OUT)
+        self._gpiodc.setOutputDirection()
         # Setup reset as output (if provided).
         if rst is not None:
-            self._gpio.setup(rst, GPIO.OUT)
+            self._gpiorst.setOutputDirection()
         # Set SPI to mode 0, MSB first.
-        spi.set_mode(0)
-        spi.set_bit_order(SPI.MSBFIRST)
-        spi.set_clock_hz(SPI_CLOCK_HZ)
+        spi.mode = 0
+        spi.speed = SPI_CLOCK_HZ
+        spi.lsbfirst = False
+        #spi.set_bit_order(SPI.MSBFIRST)
+        #spi.set_clock_hz(SPI_CLOCK_HZ)
         # Create an image buffer.
         self.buffer = Image.new('RGB', (width, height))
 
@@ -157,7 +163,8 @@ class ST7735(object):
         single SPI transaction, with a default of 4096.
         """
         # Set DC low for command, high for data.
-        self._gpio.output(self._dc, is_data)
+        self._gpiodc.setValue(is_data)
+        #self._gpio.output(self._dc, is_data)
         # Convert scalar argument to list so either can be passed as parameter.
         if isinstance(data, numbers.Number):
             data = [data & 0xFF]
@@ -177,11 +184,13 @@ class ST7735(object):
     def reset(self):
         """Reset the display, if reset pin is connected."""
         if self._rst is not None:
-            self._gpio.set_high(self._rst)
+            self._gpiorst.setValue(1)
             time.sleep(0.500)
-            self._gpio.set_low(self._rst)
+            self._gpiorst.setValue(0)
+            #self._gpio.set_low(self._rst)
             time.sleep(0.500)
-            self._gpio.set_high(self._rst)
+            self._gpiorst.setValue(1)
+            #self._gpio.set_high(self._rst)
             time.sleep(0.500)
 
     def _init(self):

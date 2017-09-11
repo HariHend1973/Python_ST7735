@@ -21,20 +21,25 @@
 from PIL import Image
 
 import ST7735 as TFT
-import Adafruit_GPIO as GPIO
-import Adafruit_GPIO.SPI as SPI
+import OnionSpi as SPI
+
 
 
 WIDTH = 128
 HEIGHT = 160
 SPEED_HZ = 4000000
 
-
 # Raspberry Pi configuration.
-DC = 24
-RST = 25
+DC = 19
+RST = 18
 SPI_PORT = 0
 SPI_DEVICE = 0
+
+# Raspberry Pi configuration.
+#DC = 24
+#RST = 25
+#SPI_PORT = 0
+#SPI_DEVICE = 0
 
 # BeagleBone Black configuration.
 # DC = 'P9_15'
@@ -42,14 +47,21 @@ SPI_DEVICE = 0
 # SPI_PORT = 1
 # SPI_DEVICE = 0
 
+#Onion SPI setup
+spi = SPI.OnionSpi(1, 32766)
+spi.sck = 7
+spi.mosi = 8
+spi.miso = 9
+spi.cs = 6
+spi.speed = 4000000
+spi.registerDevice()
+spi.setupDevice()
+
 # Create TFT LCD display class.
 disp = TFT.ST7735(
     DC,
     rst=RST,
-    spi=SPI.SpiDev(
-        SPI_PORT,
-        SPI_DEVICE,
-        max_speed_hz=SPEED_HZ))
+    spi=spi)
 
 # Initialize display.
 disp.begin()
