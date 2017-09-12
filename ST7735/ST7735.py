@@ -170,7 +170,7 @@ class ST7735(object):
         # Create an image buffer.
         self.buffer = Image.new('RGB', (width, height))
 
-    def send(self, data, is_data=True, chunk_size=4096):
+    def send(self, data, is_data=True, chunk_size=16):
         """Write a byte or array of bytes to the display. Is_data parameter
         controls if byte should be interpreted as display data (True) or command
         data (False).  Chunk_size is an optional size of bytes to write in a
@@ -188,6 +188,7 @@ class ST7735(object):
         # Write data a chunk at a time.
         for start in range(0, len(data), chunk_size):
             end = min(start+chunk_size, len(data))
+	    #print data[start:end]
             self._spi.write(data[start:end])
 
     def command(self, data):
