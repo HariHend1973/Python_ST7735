@@ -146,10 +146,10 @@ class ST7735(object):
         #different object for each pin, we define
         #_gpiodc and _gpiorst for that
         self._gpiodc = GPIO.OnionGpio(dc)
-	try:
+	    try:
             self._gpiodc._freeGpio()
-	except IOError:
-	    print "Already freed dc"
+	    except IOError:
+	        print "Already freed dc"
         if rst is not None:
             self._gpiorst = GPIO.OnionGpio(rst)
 	    #try:
