@@ -21,7 +21,7 @@
 from PIL import Image
 
 import ST7735 as TFT
-import OnionSpi as SPI
+import onionSpi as SPI
 
 
 
@@ -32,8 +32,8 @@ SPEED_HZ = 4000000
 # Raspberry Pi configuration.
 DC = 19
 RST = 18
-SPI_PORT = 0
-SPI_DEVICE = 0
+SPI_PORT = 1
+SPI_DEVICE = 32766
 
 # Raspberry Pi configuration.
 #DC = 24

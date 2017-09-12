@@ -20,13 +20,13 @@
 # THE SOFTWARE.
 import numbers
 import time
-import numpy as np
+#import numpy as np
 
 from PIL import Image
 from PIL import ImageDraw
 
 import onionGpio as GPIO
-import OnionSpi as SPI
+import onionSpi as SPI
 
 
 # SPI_CLOCK_HZ = 64000000 # 64 MHz
@@ -113,12 +113,18 @@ def color565(r, g, b):
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
 
 def image_to_data(image):
-    """Generator function to convert a PIL image to 16-bit 565 RGB bytes."""
-    # NumPy is much faster at doing this. NumPy code provided by:
-    # Keith (https://www.blogger.com/profile/02555547344016007163)
-    pb = np.array(image.convert('RGB')).astype('uint16')
-    color = ((pb[:,:,0] & 0xF8) << 8) | ((pb[:,:,1] & 0xFC) << 3) | (pb[:,:,2] >> 3)
-    return np.dstack(((color >> 8) & 0xFF, color & 0xFF)).flatten().tolist()
+    """Generator function to convert a PIL image to 16-bit 565 RGB bytes.
+     :param image: PIL image
+     :returns imgArray : 
+    """
+    pixels = image.convert('RGB').load()
+    width, height = image.size
+    for y in range(height):
+        for x in range(width):
+	    r,g,b = pixels[(x,y)]
+	    color = color565(r, g, b)
+	    yield (color >> 8) & 0xFF
+	    yield color & 0xFF
 
 class ST7735(object):
     """Representation of an ST7735 TFT LCD."""
@@ -140,13 +146,21 @@ class ST7735(object):
         #different object for each pin, we define
         #_gpiodc and _gpiorst for that
         self._gpiodc = GPIO.OnionGpio(dc)
+	try:
+            self._gpiodc._freeGpio()
+	except IOError:
+	    print "Already freed dc"
         if rst is not None:
             self._gpiorst = GPIO.OnionGpio(rst)
+	    #try:
+            #    self._gpiorst._freeGpio()
+	    #except IOError:
+	    #    print "Already freed rst"
         # Set DC as output.
-        self._gpiodc.setOutputDirection()
+        self._gpiodc.setOutputDirection(0)
         # Setup reset as output (if provided).
         if rst is not None:
-            self._gpiorst.setOutputDirection()
+            self._gpiorst.setOutputDirection(0)
         # Set SPI to mode 0, MSB first.
         spi.mode = 0
         spi.speed = SPI_CLOCK_HZ
@@ -163,7 +177,10 @@ class ST7735(object):
         single SPI transaction, with a default of 4096.
         """
         # Set DC low for command, high for data.
-        self._gpiodc.setValue(is_data)
+	if (is_data):
+            self._gpiodc.setValue(1)
+	else:
+	    self._gpiodc.setValue(0)
         #self._gpio.output(self._dc, is_data)
         # Convert scalar argument to list so either can be passed as parameter.
         if isinstance(data, numbers.Number):
